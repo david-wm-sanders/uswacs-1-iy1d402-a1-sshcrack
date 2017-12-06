@@ -59,7 +59,7 @@ if __name__ == '__main__':
             clock_end = time.time()
             print(f"({i}/{len(pws)}) Logged in! Password is '{pw}'")
             td = clock_end - clock_start
-            print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} passwords at a rate of {td/i:.2f}pw/s.")
+            print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} passwords at a rate of {i/td:.2f}pw/s.")
             perform_recon(ssh)
             print("Logging out.")
             ssh.logout()
