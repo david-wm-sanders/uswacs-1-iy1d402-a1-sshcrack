@@ -63,6 +63,8 @@ if __name__ == '__main__':
     lenpws = len(pws)
     print(f"Loaded {lenpws} passwords from '{word_pth.name}'")
 
+    w = len(str(lenpws))
+
     clock_start = time.time()
     pool = multiprocessing.Pool(multiprocessing.cpu_count() * NUM_WORKERS_PER_CPU)
 
@@ -78,11 +80,11 @@ if __name__ == '__main__':
         i += 1
         if res:
             password = pw
-            print(f"({i}/{lenpws}) Password is '{pw}'")
+            print(f"({i:0>{w}}/{lenpws}; {(i/lenpws)*100:0>5.2f}%) Password == '{pw}'")
             pool.terminate()
             break
         else:
-            print(f"({i}/{lenpws}) Password is not '{pw}'")
+            print(f"({i:0>{w}}/{lenpws}; {(i/lenpws)*100:0>5.2f}%) Password != '{pw}'")
 
     clock_end = time.time()
     pool.close()
