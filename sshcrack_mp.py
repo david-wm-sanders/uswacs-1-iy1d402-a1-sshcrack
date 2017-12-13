@@ -10,6 +10,35 @@ from pexpect import pxssh
 NUM_WORKERS_PER_CPU = 1
 
 
+def parse_args():
+    try:
+        account = sys.argv[1]
+        wordlist = sys.argv[2]
+    except IndexError:
+        print("Usage: sshcrack.py USERNAME:HOST:PORT WORDLIST")
+        sys.exit(1)
+
+    user, host, port = account.split(":")
+    return user, host, port, wordlist
+
+
+def load_pws(wordlist):
+    word_pth = Path(__file__).parent / f"{wordlist}"
+    if not word_pth.exists():
+        print(f"Word list '{word_pth.name}' not found")
+        sys.exit(1)
+
+    pws = []
+    with word_pth.open("r") as f:
+        for pw in f.read().split("\n"):
+            pws.append(pw)
+
+    lenpws = len(pws)
+    print(f"Loaded {lenpws} passwords from '{word_pth.name}'")
+
+    return pws, lenpws
+
+
 def connect(user, host, port, password):
     try:
         ssh = pxssh.pxssh()
@@ -41,29 +70,8 @@ def perform_recon(ssh):
 
 
 if __name__ == '__main__':
-    try:
-        account = sys.argv[1]
-        wordlist = sys.argv[2]
-    except IndexError:
-        print("Usage: sshcrack.py USERNAME:HOST:PORT WORDLIST")
-        sys.exit(1)
-
-    user, host, port = account.split(":")
-
-    word_pth = Path(__file__).parent / f"{wordlist}"
-    if not word_pth.exists():
-        print(f"Word list '{word_pth.name}' not found")
-        sys.exit(1)
-
-    pws = []
-    with word_pth.open("r") as f:
-        for pw in f.read().split("\n"):
-            pws.append(pw)
-
-    lenpws = len(pws)
-    print(f"Loaded {lenpws} passwords from '{word_pth.name}'")
-
-    w = len(str(lenpws))
+    user, host, port, wordlist = parse_args()
+    pws, lenpws = load_pws(wordlist)
 
     clock_start = time.time()
     pool = multiprocessing.Pool(multiprocessing.cpu_count() * NUM_WORKERS_PER_CPU)
@@ -75,6 +83,7 @@ if __name__ == '__main__':
 
     password = None
     i = 0
+    w = len(str(lenpws))
     for result in results:
         res, pw = result.get()
         i += 1
