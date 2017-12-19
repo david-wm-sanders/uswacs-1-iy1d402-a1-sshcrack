@@ -82,12 +82,10 @@ if __name__ == '__main__':
         args = (user, host, port, pw)
         results.append(pool.apply_async(connect, args))
 
-    password = None
-    i = 0
     w = len(str(lenpws))
-    for result in results:
+    password = None
+    for i, result in enumerate(results, 1):
         res, pw = result.get()
-        i += 1
         progress = f"({i:0>{w}}/{lenpws}; {(i/lenpws)*100:0>5.2f}%)"
         if res:
             password = pw
@@ -101,8 +99,8 @@ if __name__ == '__main__':
     pool.close()
 
     td = clock_end - clock_start
-    print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} passwords "
-          f"at a rate of {i/td:.2f}pw/s.")
+    print(f"Took {td/60:.2f} minutes to check {i}/{len(pws)} "
+          f"passwords at a rate of {i/td:.2f}pw/s.")
 
     if password:
         ssh = pxssh.pxssh()
