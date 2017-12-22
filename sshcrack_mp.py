@@ -33,10 +33,7 @@ def load_pws(wordlist):
         for pw in f.read().split("\n"):
             pws.append(pw)
 
-    lenpws = len(pws)
-    print(f"Loaded {lenpws} passwords from '{word_pth.name}'")
-
-    return pws, lenpws
+    return pws
 
 
 def connect(user, host, port, password):
@@ -71,7 +68,10 @@ def perform_recon(ssh):
 
 if __name__ == '__main__':
     user, host, port, wordlist = parse_args()
-    pws, lenpws = load_pws(wordlist)
+    pws = load_pws(wordlist)
+    lenpws = len(pws)
+    print(f"Loaded {lenpws} passwords from '{wordlist}'")
+    w = len(str(lenpws))
 
     clock_start = time.time()
     nw = multiprocessing.cpu_count() * NUM_WORKERS_PER_CPU
@@ -82,7 +82,6 @@ if __name__ == '__main__':
         args = (user, host, port, pw)
         results.append(pool.apply_async(connect, args))
 
-    w = len(str(lenpws))
     password = None
     for i, result in enumerate(results, 1):
         res, pw = result.get()
@@ -90,12 +89,12 @@ if __name__ == '__main__':
         if res:
             password = pw
             print(f"{progress} Password == '{pw}'")
-            pool.terminate()
             break
         else:
             print(f"{progress} Password != '{pw}'")
 
     clock_end = time.time()
+    pool.terminate()
     pool.close()
 
     td = clock_end - clock_start
